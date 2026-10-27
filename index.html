@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ΓΙΑΓΙΑ OS · YiayiaOS</title>
+  <meta name="description" content="YiayiaOS — a Greek grandmother's evil-eye ritual running as an operating system. Protect yourself with your hands.">
+  <meta name="theme-color" content="#020213">
+  <link rel="icon" href="assets/mati.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/yiayia.css">
+</head>
+<body>
+  <div id="stage"></div>
+
+  <svg id="cracks" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+    <g fill="none" stroke="#e8f6ff" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M500 500 L455 430 L470 360 L420 280 L430 190 L380 90 L395 0" stroke-width="3"/>
+      <path d="M500 500 L580 470 L650 490 L740 440 L850 460 L1000 400" stroke-width="3"/>
+      <path d="M500 500 L530 590 L500 680 L560 780 L540 880 L590 1000" stroke-width="3"/>
+      <path d="M500 500 L410 540 L330 520 L250 590 L130 580 L0 650" stroke-width="3"/>
+      <path d="M470 360 L540 320 L600 250" stroke-width="2"/>
+      <path d="M650 490 L690 560 L760 600" stroke-width="2"/>
+      <path d="M330 520 L300 440 L220 410" stroke-width="2"/>
+      <path d="M500 680 L430 720 L400 800" stroke-width="2"/>
+      <path d="M740 440 L770 360 L860 300 L920 180" stroke-width="1.5"/>
+      <path d="M250 590 L240 680 L170 760 L120 900" stroke-width="1.5"/>
+      <circle cx="500" cy="500" r="14" stroke-width="2"/>
+    </g>
+  </svg>
+
+  <div id="scanlines" aria-hidden="true"></div>
+  <div id="vignette" aria-hidden="true"></div>
+  <div id="pulse-red" aria-hidden="true"></div>
+  <div id="pulse-gold" aria-hidden="true"></div>
+
+  <!-- ===== HUD ===== -->
+  <main id="hud" hidden>
+    <div id="meter">
+      <div class="meter-track">
+        <div class="meter-mark" style="left:0"></div>
+        <div class="meter-mark half" style="left:50%"></div>
+        <div class="meter-mark" style="left:100%"></div>
+        <div id="meter-fill"></div>
+      </div>
+      <div class="meter-labels"><span data-t="meterLo"></span><span id="meter-num">50</span><span data-t="meterHi"></span></div>
+    </div>
+
+    <section id="status" class="panel">
+      <div class="panel-head">ΓΙΑΓΙΑ_OS v8.0 <button id="mute" class="icon-btn" aria-label="Sound on/off">♪</button></div>
+      <div id="status-gr" class="status-gr"></div>
+      <div id="status-en" class="status-en"></div>
+      <div id="session-bar"><div id="session-fill"></div></div>
+    </section>
+
+    <section id="yiayia" class="panel">
+      <div class="kandili" aria-hidden="true"></div>
+      <div class="portrait">
+        <video id="yiayia-video" src="assets/yiayia.mp4" autoplay loop muted playsinline></video>
+      </div>
+      <div class="live"><span class="rec"></span> ΖΩΝΤΑΝΑ · ΓΙΑΓΙΑ</div>
+      <div id="bubble" aria-live="polite"><div class="b-gr"></div><div class="b-en"></div></div>
+    </section>
+
+    <section id="notifications" aria-live="polite"></section>
+
+    <section id="log" class="panel"></section>
+
+    <section id="gestures" class="panel">
+      <canvas id="cam-preview" width="160" height="120" aria-hidden="true"></canvas>
+      <div id="gesture-list"></div>
+      <div id="manual-note"></div>
+    </section>
+
+    <div id="hand-hint"><div class="gr">ΔΕΙΞΕ ΤΟ ΧΕΡΙ ΣΟΥ</div><div class="en">SHOW YOUR HAND</div></div>
+  </main>
+
+  <!-- ===== SCREENS ===== -->
+  <section id="title-screen" class="screen">
+    <img src="assets/mati.svg" class="title-mati" alt="">
+    <h1 class="title-gr" data-t="title"></h1>
+    <div class="title-sub"><span data-t="subtitle"></span></div>
+    <button id="begin" class="big-btn"><span class="gr"></span><span class="en"></span></button>
+    <p class="cam-note"><span data-t="camNote"></span></p>
+    <p class="credits">Αλέξανδρος Τουραμάνης · Alexandros Touramanis</p>
+  </section>
+
+  <section id="boot-screen" class="screen"><pre id="boot-text"></pre></section>
+
+  <section id="oil-screen" class="screen">
+    <div class="oil-head"><div class="gr" data-t="diagnosis"></div><div class="en" data-t="oilTest"></div></div>
+    <canvas id="oil-canvas"></canvas>
+    <div id="oil-verdict"><div class="gr"></div><div class="en"></div></div>
+  </section>
+
+  <section id="tutorial-screen" class="screen">
+    <div class="tut-head"><div class="gr">ΤΑ ΞΟΡΚΙΑ ΤΗΣ ΓΙΑΓΙΑΣ</div><div class="en">YIAYIA'S SPELLS</div></div>
+    <div id="tut-cards"></div>
+    <div class="tut-foot"><span class="gr">Δοκίμασε το καθένα</span> · <span class="en">Try each one</span></div>
+  </section>
+
+  <section id="crash-screen" class="screen">
+    <h1 class="blink"><span data-t="crash1"></span></h1>
+    <p class="crash-en" data-t="crash2"></p>
+    <div class="reboot-wrap">
+      <svg viewBox="0 0 120 120" class="reboot-ring"><circle cx="60" cy="60" r="54" class="ring-bg"/><circle id="reboot-progress" cx="60" cy="60" r="54" class="ring-fg"/></svg>
+      <img src="assets/moutza.webp" id="reboot-hand" alt="Μούντζα">
+    </div>
+    <p class="crash-cta"><span data-t="crash3"></span></p>
+  </section>
+
+  <section id="end-screen" class="screen">
+    <div class="tired"><span class="gr"></span><span class="en"></span></div>
+    <img id="cert-img" alt="Πιστοποιητικό ξεματιάσματος">
+    <div class="end-actions">
+      <a id="cert-download" class="big-btn small" download="yiayia-os-pistopoiitiko.png"><span class="gr"></span><span class="en"></span></a>
+      <button id="again" class="big-btn small"><span class="gr"></span><span class="en"></span></button>
+    </div>
+  </section>
+
+  <div id="debug" hidden>
+    <h2>ΓΙΑΓΙΑ CONFIG</h2>
+    <label>Decay/s <input type="range" min="0" max="6" step="0.1" id="cfg-decay"><output></output></label>
+    <label>Heal/s <input type="range" min="2" max="40" step="1" id="cfg-heal"><output></output></label>
+    <label>Cast/s <input type="range" min="5" max="60" step="1" id="cfg-cast"><output></output></label>
+    <label>Threat gap s <input type="range" min="2" max="15" step="0.5" id="cfg-gap"><output></output></label>
+    <label><input type="checkbox" id="cfg-calm"> Calm visuals (no pulsing)</label>
+    <div id="dbg-read"></div>
+    <div class="dbg-btns"><button id="dbg-end">End session</button><button id="dbg-crash">Crash</button></div>
+    <small>H to close · keys 1–4 hold gestures</small>
+  </div>
+
+  <script src="vendor/mediapipe/hands/hands.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

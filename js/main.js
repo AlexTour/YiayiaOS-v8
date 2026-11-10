@@ -34,7 +34,10 @@ document.querySelectorAll('[data-t]').forEach((el) => {
   else el.innerHTML = `${pair[0]}<span class="en">${pair[1]}</span>`;
 });
 const setBi = (el, pair) => { el.querySelector('.gr').textContent = pair[0]; el.querySelector('.en').textContent = pair[1]; };
-setBi($('#begin'), KIOSK ? UI.beginKiosk : UI.begin);
+setBi($('#begin'), UI.gateNoCam);
+setBi($('#replay'), UI.replay);
+setBi($('#sound-chip'), UI.soundChip);
+$('.cam-note .best').innerHTML = KIOSK ? '' : `${UI.bestOn[0]}<br><i>${UI.bestOn[1]}</i>`;
 setBi($('#cert-download'), UI.download);
 setBi($('#again'), UI.again);
 setBi($('.tired'), UI.tired);
@@ -64,6 +67,7 @@ const S = {
   noHandT: 0, lostSaid: false, nextThreat: 3, threats: [], threatId: 0, recent: [],
   stats: {}, said: {}, bubbleUntil: 0, idleSayAt: 0, hitFlash: 0, fullFlash: 0, crackResidual: 0,
   yawning: 0, scene: 'title', sessions: 0, time: 0, palmOnTitle: 0,
+  gateArmed: false, gateIdleT: 0, endT: 0, replayT: 0,
 };
 let run = 0; // increments to cancel any running async flow
 
@@ -118,20 +122,27 @@ function log(pair, type = '') {
 }
 
 // ---------- tracking ----------
-track.setPreview($('#cam-preview'));
+track.addPreview($('#cam-preview'));
+track.addPreview($('#title-preview'));
 track.onUpdate((ev) => { S.present = ev.present; S.gesture = ev.gesture; S.pointer = ev.pointer; });
 
 function enterManual(reason) {
   track.enableManual();
   document.body.classList.add('manual');
   $('#manual-note').innerHTML = `${UI.nocam[0]}<br><i>${UI.nocam[1]}</i>`;
+  // Without a camera the piece can't be played by hand, so (only then) offer buttons.
+  $('#gate').dataset.state = 'manual';
+  setBi($('#gate-msg'), UI.noCamWhy[reason] || UI.noCamWhy['no-camera']);
+  $('#gate-tip').classList.remove('show');
+  $('#begin').hidden = false;
+  $('#again').hidden = false;
   console.info('[yiayia] manual mode:', reason);
 }
 
 // hold-to-gesture buttons and keys (always on — useful for demos and recording too)
 document.querySelectorAll('.g-row').forEach((row) => {
   const g = row.dataset.g;
-  const on = (e) => { e.preventDefault(); track.setManualGesture(g); };
+  const on = (e) => { if (track.mode !== 'manual') return; e.preventDefault(); track.setManualGesture(g); };
   const off = () => track.setManualGesture(null);
   row.addEventListener('pointerdown', on);
   row.addEventListener('pointerup', off); row.addEventListener('pointercancel', off); row.addEventListener('pointerleave', off);
@@ -142,7 +153,7 @@ addEventListener('keydown', (e) => {
   if (KEYS[e.key] && !e.ctrlKey && !e.metaKey) { heldKey = e.key; track.setManualGesture(KEYS[e.key]); }
   const dbgCombo = KIOSK ? (e.key.toLowerCase() === 'h' && e.ctrlKey && e.shiftKey) : (e.key.toLowerCase() === 'h' && !e.ctrlKey);
   if (dbgCombo) $('#debug').hidden = !$('#debug').hidden;
-  if ((e.key === ' ' || e.key === 'Enter') && S.scene === 'title-screen') begin();
+  if ((e.key === ' ' || e.key === 'Enter') && S.scene === 'title-screen' && track.mode === 'manual') begin();
 });
 addEventListener('keyup', (e) => { if (e.key === heldKey) { heldKey = null; track.setManualGesture(null); } });
 
@@ -314,11 +325,11 @@ function frame(n) {
 
   if (S.playing) updateRitual(dt);
 
-  // kiosk: an open palm on the title screen starts a session
-  if (KIOSK && S.scene === 'title-screen') {
-    S.palmOnTitle = S.gesture === 'moutza' ? S.palmOnTitle + dt : 0;
-    if (S.palmOnTitle > 0.6) begin();
-  }
+  // hands-only: an open palm, held, starts a session (and replays from the certificate)
+  if (S.gesture !== 'moutza') S.gateArmed = true; // the palm must be lowered once between sessions
+  if (S.scene === 'title-screen') updateGate(dt);
+  if (S.scene === 'end-screen') updateReplay(dt);
+  $('#sound-chip').hidden = !(audio.wantsGesture() && !audio.isMuted() && !KIOSK);
 
   // HUD
   $('#meter-fill').style.width = S.meter + '%';
@@ -329,6 +340,8 @@ function frame(n) {
   const stKey = S.dead ? null : (track.mode === 'camera' && !S.present) ? 'nohand' : (S.gesture === 'none' ? 'idle' : S.gesture);
   if (stKey) { $('#status-gr').textContent = UI.status[stKey][0]; $('#status-en').textContent = UI.status[stKey][1]; }
   $('#hand-hint').classList.toggle('show', S.playing && !S.dead && track.mode === 'camera' && S.noHandT > 1.5);
+  const tip = $('#hand-hint .tip'), wantTip = S.noHandT > 8;
+  if (wantTip !== !!tip.textContent) tip.innerHTML = wantTip ? `${UI.handTip[0]}<br><i>${UI.handTip[1]}</i>` : '';
   if (S.time > S.bubbleUntil) $('#bubble').classList.remove('show');
 
   // light
@@ -353,6 +366,40 @@ function frame(n) {
 }
 requestAnimationFrame(frame);
 
+// ---------- hands-only gate ----------
+const HOLD_TO_BEGIN = 0.8;
+let lastGateState = '';
+function updateGate(dt) {
+  const gate = $('#gate');
+  if (track.mode === 'manual') return; // enterManual() set it up
+  const st = track.status;
+  let state, msg;
+  if (st === 'idle' || st === 'asking') { state = 'asking'; msg = UI.gateAsking; }
+  else if (st === 'loading') { state = 'loading'; msg = UI.gateLoading; }
+  else if (st === 'ready') {
+    const palm = S.present && S.gesture === 'moutza' && S.gateArmed;
+    S.palmOnTitle = palm ? S.palmOnTitle + dt : Math.max(0, S.palmOnTitle - dt * 2);
+    state = S.present ? 'hand' : 'ready';
+    msg = S.palmOnTitle > 0.05 ? UI.gateHold : UI.gateReady;
+    S.gateIdleT = S.present && S.gesture === 'moutza' ? 0 : S.gateIdleT + dt;
+    $('#gate-tip').classList.toggle('show', S.gateIdleT > 8);
+    if (S.palmOnTitle >= HOLD_TO_BEGIN) { S.palmOnTitle = 0; begin(); }
+  } else return;
+  $('#gate-fill').style.width = Math.min(1, S.palmOnTitle / HOLD_TO_BEGIN) * 100 + '%';
+  const key = state + msg[0];
+  if (key !== lastGateState) { lastGateState = key; gate.dataset.state = state; setBi($('#gate-msg'), msg); }
+}
+setBi($('#gate-tip'), UI.handTip);
+
+function updateReplay(dt) {
+  S.endT += dt;
+  if (track.mode !== 'camera') return;
+  const palm = S.endT > 4 && S.present && S.gesture === 'moutza' && S.gateArmed;
+  S.replayT = palm ? S.replayT + dt : Math.max(0, S.replayT - dt * 2);
+  $('#replay-fill').style.width = Math.min(1, S.replayT / HOLD_TO_BEGIN) * 100 + '%';
+  if (S.replayT >= HOLD_TO_BEGIN) { S.replayT = 0; ++run; S.gateArmed = false; startPlay(); }
+}
+
 // ---------- flow ----------
 let camPromise = null;
 function ensureCamera() {
@@ -363,6 +410,7 @@ function ensureCamera() {
 async function begin() {
   if (S.scene !== 'title-screen') return;
   const token = ++run;
+  S.gateArmed = false;
   S.sessions++;
   audio.init();
   ensureCamera();
@@ -467,6 +515,7 @@ async function endSession() {
   if (token !== run) return;
   $('#cert-img').src = url;
   $('#cert-download').href = url;
+  S.endT = 0; S.replayT = 0; $('#replay-fill').style.width = '0%';
   show('end-screen');
   if (KIOSK) { if (await wait(15000, token)) goTitle(); }
 }
@@ -481,7 +530,7 @@ async function sleepAndReset() {
 function goTitle() {
   ++run;
   if (KIOSK && S.sessions >= 15) { location.reload(); return; } // fresh memory every so often during a long festival day
-  Object.assign(S, { playing: false, dead: false, meter: 50, grace: 100, sessionT: 0, palmOnTitle: 0 });
+  Object.assign(S, { playing: false, dead: false, meter: 50, grace: 100, sessionT: 0, palmOnTitle: 0, gateIdleT: 0, gateArmed: false });
   document.body.classList.remove('dead');
   clearThreats();
   $('#hud').hidden = true;
@@ -509,13 +558,15 @@ $('#dbg-end').addEventListener('click', () => { if (S.playing) endSession(); });
 $('#dbg-crash').addEventListener('click', () => { if (S.playing && !S.dead) { S.meter = 0; } });
 
 // ---------- start ----------
+// Hands-only: the camera starts as soon as the page opens; nothing needs a click.
 show('title-screen');
+audio.init();
+ensureCamera();
+// Browsers keep sound off until the first touch or key press (the kiosk launcher lifts this).
+['pointerdown', 'keydown', 'touchstart'].forEach((ev) => addEventListener(ev, () => audio.init(), { passive: true }));
 if (KIOSK) {
-  // Kiosk: camera and sound start immediately (launch Chrome with the flags in kiosk/).
-  audio.init(); ensureCamera();
   try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => {}); } catch (_) {}
   addEventListener('error', () => setTimeout(() => location.reload(), 5000));
-  addEventListener('pointerdown', () => audio.init(), { once: true });
 }
 
 // test hook

@@ -356,4 +356,6 @@ export function setMuted(m) {
 }
 export const isMuted = () => muted;
 export const isRunning = () => !!ctx && ctx.state === 'running';
+// true while the browser is still holding sound back until the visitor touches the page
+export const wantsGesture = () => !!ctx && ctx.state !== 'running';
 export const context = () => ctx;

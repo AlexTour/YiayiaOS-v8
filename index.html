@@ -71,7 +71,7 @@
       <div id="manual-note"></div>
     </section>
 
-    <div id="hand-hint"><div class="gr">ΔΕΙΞΕ ΤΟ ΧΕΡΙ ΣΟΥ</div><div class="en">SHOW YOUR HAND</div></div>
+    <div id="hand-hint"><div class="gr">ΔΕΙΞΕ ΤΟ ΧΕΡΙ ΣΟΥ</div><div class="en">SHOW YOUR HAND</div><div class="tip"></div></div>
   </main>
 
   <!-- ===== SCREENS ===== -->
@@ -79,8 +79,17 @@
     <img src="assets/mati.svg" class="title-mati" alt="">
     <h1 class="title-gr" data-t="title"></h1>
     <div class="title-sub"><span data-t="subtitle"></span></div>
-    <button id="begin" class="big-btn"><span class="gr"></span><span class="en"></span></button>
-    <p class="cam-note"><span data-t="camNote"></span></p>
+    <div id="gate" data-state="idle">
+      <div class="gate-frame">
+        <canvas id="title-preview" width="320" height="240" aria-hidden="true"></canvas>
+        <img src="assets/moutza.webp" class="gate-palm" alt="">
+        <div class="gate-bar"><div id="gate-fill"></div></div>
+      </div>
+      <div id="gate-msg" aria-live="polite"><div class="gr"></div><div class="en"></div></div>
+      <div id="gate-tip"><div class="gr"></div><div class="en"></div></div>
+      <button id="begin" class="big-btn" hidden><span class="gr"></span><span class="en"></span></button>
+    </div>
+    <p class="cam-note"><span data-t="camNote"></span><span class="best"></span></p>
     <p class="credits">Αλέξανδρος Τουραμάνης · Alexandros Touramanis</p>
   </section>
 
@@ -113,9 +122,12 @@
     <img id="cert-img" alt="Πιστοποιητικό ξεματιάσματος">
     <div class="end-actions">
       <a id="cert-download" class="big-btn small" download="yiayia-os-pistopoiitiko.png"><span class="gr"></span><span class="en"></span></a>
-      <button id="again" class="big-btn small"><span class="gr"></span><span class="en"></span></button>
+      <button id="again" class="big-btn small" hidden><span class="gr"></span><span class="en"></span></button>
     </div>
+    <div id="replay"><div class="replay-bar"><div id="replay-fill"></div></div><div class="gr"></div><div class="en"></div></div>
   </section>
+
+  <div id="sound-chip" hidden><span aria-hidden="true">♪</span> <span class="gr"></span> · <span class="en"></span></div>
 
   <div id="debug" hidden>
     <h2>ΓΙΑΓΙΑ CONFIG</h2>

@@ -12,11 +12,12 @@ Made by Alexandros Touramanis. Bilingual, Greek first.
 
 ## Try it
 
-**Online:** open the page (GitHub Pages works as-is), press *Begin*, allow the camera.
+**Online:** open https://alextour.github.io/YiayiaOS-v8/, allow the camera, and hold up an
+open palm. There are no buttons: the piece is played only with your hands. Browsers keep
+sound off until you click or touch the page once.
 Nothing leaves your device; the camera image is processed in the browser and never stored.
 
-**No camera?** The page falls back automatically: press and hold the on-screen
-buttons, or keys **1–4**.
+**No camera?** Only then does the page offer on-screen buttons (or keys **1–4**) instead of gestures.
 
 **Locally / offline:** everything (hand tracking model, 3D engine, fonts) is in this
 repo — no internet needed.
@@ -49,7 +50,7 @@ kiosk\start-kiosk.bat       # Windows
 ```
 
 Opens Chrome full-screen at `?kiosk`: camera and sound start without prompts, an
-open palm starts a session, the piece resets itself after ~30 s with nobody in
+open palm starts a session (and plays again from the certificate), the piece resets itself after ~30 s with nobody in
 front of it, and the page refreshes itself periodically for long festival days.
 `Ctrl+Shift+H` opens the hidden config panel (rates, calm visuals, tracker FPS).
 

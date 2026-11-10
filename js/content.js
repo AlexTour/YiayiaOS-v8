@@ -127,6 +127,22 @@ export const UI = {
   tired:      ['Η ΓΙΑΓΙΑ ΚΟΥΡΑΣΤΗΚΕ', 'YIAYIA IS TIRED'],
   nocam:      ['ΧΩΡΙΣ ΚΑΜΕΡΑ — πάτα και κράτα τα κουμπιά ή τα πλήκτρα 1–4', 'NO CAMERA — press and hold the buttons or keys 1–4'],
   sound:      ['ΗΧΟΣ', 'SOUND'],
+  gateAsking: ['Επίτρεψε την κάμερα για να σε δει η γιαγιά', 'Allow the camera so Yiayia can see you'],
+  gateLoading:['Φόρτωση του ματιού…', 'Waking the eye…'],
+  gateReady:  ['ΔΕΙΞΕ ΤΗΝ ΠΑΛΑΜΗ ΣΟΥ ΓΙΑ ΝΑ ΞΕΚΙΝΗΣΕΙΣ', 'SHOW YOUR OPEN PALM TO BEGIN'],
+  gateHold:   ['ΚΡΑΤΑ ΤΗΝ…', 'HOLD IT…'],
+  gateNoCam:  ['ΧΩΡΙΣ ΚΑΜΕΡΑ — ΠΑΤΗΣΕ ΓΙΑ ΝΑ ΞΕΚΙΝΗΣΕΙΣ', 'NO CAMERA — PRESS TO BEGIN'],
+  noCamWhy: {
+    denied:     ['Η κάμερα δεν επιτράπηκε. Επίτρεψέ την από τη γραμμή διευθύνσεων και ανανέωσε τη σελίδα.', 'Camera access was blocked. Allow it from the address bar and reload.'],
+    'no-camera':['Δεν βρέθηκε κάμερα σε αυτή τη συσκευή.', 'No camera was found on this device.'],
+    unsupported:['Αυτός ο browser δεν δίνει πρόσβαση στην κάμερα. Δοκίμασε Chrome, Edge ή Safari.', 'This browser cannot use the camera. Try Chrome, Edge or Safari.'],
+    'tracker-missing':['Ο ανιχνευτής χεριών δεν φόρτωσε.', 'The hand tracker did not load.'],
+    'tracker-failed': ['Ο ανιχνευτής χεριών δεν ξεκίνησε σε αυτή τη συσκευή.', 'The hand tracker could not start on this device.'],
+  },
+  handTip:    ['Πλησίασε την κάμερα, με το φως μπροστά σου, και άνοιξε την παλάμη.', 'Move closer to the camera, light in front of you, and open your palm.'],
+  replay:     ['ΔΕΙΞΕ ΠΑΛΑΜΗ ΓΙΑ ΝΑ ΞΑΝΑΠΑΙΞΕΙΣ', 'SHOW YOUR PALM TO PLAY AGAIN'],
+  soundChip:  ['Άγγιξε οπουδήποτε για ήχο', 'Tap anywhere for sound'],
+  bestOn:     ['Καλύτερα σε υπολογιστή με κάμερα, με ήχο.', 'Best on a computer with a webcam, sound on.'],
 };
 
 export const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];

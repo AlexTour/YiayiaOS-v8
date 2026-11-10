@@ -11,9 +11,10 @@ let lastSeen = 0, lastLandmarks = null;
 let candidate = 'none', candidateSince = 0, stable = 'none';
 let manual = null; // gesture forced by buttons/keys (fallback mode)
 let pointer = { x: 0.5, y: 0.5 };
-let previewCanvas = null, previewCtx = null;
+const previews = []; // canvases that show the mirrored camera image
 export let mode = 'none'; // 'camera' | 'manual' | 'none'
 export const debug = { raw: 'none', fps: 0 };
+export let status = 'idle'; // idle | asking | loading | ready | failed
 
 const d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -69,37 +70,43 @@ function onResults(res) {
 }
 
 function drawPreview(image, lm) {
-  if (!previewCtx) return;
-  const c = previewCanvas, x = previewCtx;
-  x.save();
-  x.clearRect(0, 0, c.width, c.height);
-  x.translate(c.width, 0); x.scale(-1, 1);
-  x.globalAlpha = 0.55; x.filter = 'grayscale(1) contrast(1.2) sepia(0.6)';
-  if (image) x.drawImage(image, 0, 0, c.width, c.height);
-  x.filter = 'none'; x.globalAlpha = 1;
-  if (lm) {
-    x.strokeStyle = '#ffd700'; x.lineWidth = 2;
-    x.beginPath();
-    CONNECTIONS.forEach(([a, b]) => { x.moveTo(lm[a].x * c.width, lm[a].y * c.height); x.lineTo(lm[b].x * c.width, lm[b].y * c.height); });
-    x.stroke();
-    x.fillStyle = '#00f2ff';
-    lm.forEach(p => x.fillRect(p.x * c.width - 2, p.y * c.height - 2, 4, 4));
+  for (const c of previews) {
+    if (!c.offsetParent) continue; // not on screen
+    const x = c.getContext('2d');
+    x.save();
+    x.clearRect(0, 0, c.width, c.height);
+    x.translate(c.width, 0); x.scale(-1, 1);
+    x.globalAlpha = 0.55; x.filter = 'grayscale(1) contrast(1.2) sepia(0.6)';
+    if (image) x.drawImage(image, 0, 0, c.width, c.height);
+    x.filter = 'none'; x.globalAlpha = 1;
+    if (lm) {
+      x.strokeStyle = '#ffd700'; x.lineWidth = Math.max(2, c.width / 90);
+      x.beginPath();
+      CONNECTIONS.forEach(([a, b]) => { x.moveTo(lm[a].x * c.width, lm[a].y * c.height); x.lineTo(lm[b].x * c.width, lm[b].y * c.height); });
+      x.stroke();
+      x.fillStyle = '#00f2ff';
+      const r = Math.max(2, c.width / 80);
+      lm.forEach(p => x.fillRect(p.x * c.width - r, p.y * c.height - r, r * 2, r * 2));
+    }
+    x.restore();
   }
-  x.restore();
 }
 
 export function onUpdate(fn) { listeners.add(fn); return () => listeners.delete(fn); }
-export function setPreview(canvas) { previewCanvas = canvas; previewCtx = canvas ? canvas.getContext('2d') : null; }
+export function addPreview(canvas) { if (canvas) previews.push(canvas); }
 
 export async function startCamera() {
   if (running) return { ok: true };
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return { ok: false, reason: 'unsupported' };
-  if (typeof window.Hands !== 'function') return { ok: false, reason: 'tracker-missing' };
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { status = 'failed'; return { ok: false, reason: 'unsupported' }; }
+  if (typeof window.Hands !== 'function') { status = 'failed'; return { ok: false, reason: 'tracker-missing' }; }
+  status = 'asking';
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }, audio: false });
   } catch (e) {
+    status = 'failed';
     return { ok: false, reason: e && e.name === 'NotAllowedError' ? 'denied' : 'no-camera' };
   }
+  status = 'loading';
   video = document.createElement('video');
   video.playsInline = true; video.muted = true; video.srcObject = stream;
   await video.play().catch(() => {});
@@ -107,7 +114,7 @@ export async function startCamera() {
   hands = new window.Hands({ locateFile: (f) => HANDS_PATH + f });
   hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
   hands.onResults(onResults);
-  try { await hands.initialize(); } catch (e) { return { ok: false, reason: 'tracker-failed' }; }
+  try { await hands.initialize(); } catch (e) { status = 'failed'; return { ok: false, reason: 'tracker-failed' }; }
 
   running = true; mode = 'camera';
   let frames = 0, fpsT = performance.now();
@@ -115,7 +122,7 @@ export async function startCamera() {
     if (!running) return;
     if (!busy && video.readyState >= 2) {
       busy = true;
-      try { await hands.send({ image: video }); } catch (_) {}
+      try { await hands.send({ image: video }); if (status === 'loading') status = 'ready'; } catch (_) {}
       busy = false;
       frames++;
       const t = performance.now();

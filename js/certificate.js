@@ -4,7 +4,9 @@ const GR_MONTHS = ['Ιανουαρίου', 'Φεβρουαρίου', 'Μαρτί
 
 function loadImg(src) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; }); }
 
-export async function renderCertificate(stats, eyeCanvas) {
+const EN_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+export async function renderCertificate(stats, eyeCanvas, L = 0) {
   await document.fonts.ready;
   const W = 1080, H = 1350;
   const c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -28,10 +30,9 @@ export async function renderCertificate(stats, eyeCanvas) {
 
   // header
   x.fillStyle = '#1b1407';
-  x.font = '26px Px'; x.fillText('ΓΙΑΓΙΑ OS v8.0', W / 2, 140);
+  x.font = '26px Px'; x.fillText(L ? 'YIAYIA OS v8.0' : 'ΓΙΑΓΙΑ OS v8.0', W / 2, 140);
   x.font = '44px Px'; x.fillStyle = '#8a1010';
-  wrapCenter(x, UI.certTitle[0], W / 2, 220, 900, 58);
-  x.font = 'italic 30px Serif'; x.fillStyle = '#6b5c3e'; x.fillText(UI.certTitle[1], W / 2, 330);
+  wrapCenter(x, UI.certTitle[L], W / 2, 230, 900, 64);
 
   // the eye, as it was at the end
   const mati = await loadImg('assets/mati.svg');
@@ -48,9 +49,7 @@ export async function renderCertificate(stats, eyeCanvas) {
 
   // body
   x.fillStyle = '#1b1407'; x.font = '34px Serif';
-  wrapCenter(x, UI.certBody[0], W / 2, 700, 860, 46);
-  x.font = 'italic 24px Serif'; x.fillStyle = '#6b5c3e';
-  wrapCenter(x, UI.certBody[1], W / 2, 790, 860, 34);
+  wrapCenter(x, UI.certBody[L], W / 2, 715, 860, 46);
 
   // stats
   const rows = ['blocked', 'returned', 'hits', 'yawns', 'moutzes', 'crashes'];
@@ -59,9 +58,8 @@ export async function renderCertificate(stats, eyeCanvas) {
   rows.forEach((k, i) => {
     const col = i % 2, row = Math.floor(i / 2);
     const px = col === 0 ? 150 : W / 2 + 40, py = y + row * 68;
-    x.textAlign = 'left'; x.fillStyle = '#1b1407'; x.font = '24px Serif';
-    x.fillText(UI.certStats[k][0], px, py);
-    x.font = 'italic 17px Serif'; x.fillStyle = '#6b5c3e'; x.fillText(UI.certStats[k][1], px, py + 24);
+    x.textAlign = 'left'; x.fillStyle = '#1b1407'; x.font = '25px Serif';
+    x.fillText(UI.certStats[k][L], px, py + 6);
     x.textAlign = 'right'; x.font = '30px Px'; x.fillStyle = '#1d3f9a';
     x.fillText(String(stats[k] ?? 0), px + 380, py + 6);
   });
@@ -69,18 +67,18 @@ export async function renderCertificate(stats, eyeCanvas) {
   // footer: date, validity, signature
   const d = new Date();
   x.textAlign = 'left'; x.fillStyle = '#1b1407'; x.font = '24px Serif';
-  x.fillText(`Αθήνα, ${d.getDate()} ${GR_MONTHS[d.getMonth()]} ${d.getFullYear()}`, 150, 1150);
+  x.fillText(L ? `Athens, ${d.getDate()} ${EN_MONTHS[d.getMonth()]} ${d.getFullYear()}` : `Αθήνα, ${d.getDate()} ${GR_MONTHS[d.getMonth()]} ${d.getFullYear()}`, 150, 1150);
   x.font = 'italic 20px Serif'; x.fillStyle = '#6b5c3e';
-  x.fillText('Ισχύει για 40 ημέρες · Valid for 40 days', 150, 1186);
+  x.fillText(L ? 'Valid for 40 days' : 'Ισχύει για 40 ημέρες', 150, 1186);
   x.textAlign = 'center'; x.fillStyle = '#1b1407';
-  x.font = 'italic 44px Serif'; x.fillText(UI.certSign[0], W - 260, 1160);
+  x.font = 'italic 44px Serif'; x.fillText(UI.certSign[L], W - 260, 1160);
   x.strokeStyle = '#1b1407'; x.lineWidth = 2; x.beginPath(); x.moveTo(W - 380, 1176); x.lineTo(W - 140, 1176); x.stroke();
   // seal
   x.save(); x.translate(W - 205, 1105); x.rotate(-0.18);
   x.strokeStyle = 'rgba(160,20,20,.75)'; x.lineWidth = 5; x.beginPath(); x.arc(0, 0, 54, 0, Math.PI * 2); x.stroke();
   x.beginPath(); x.arc(0, 0, 43, 0, Math.PI * 2); x.stroke();
   x.fillStyle = 'rgba(160,20,20,.8)'; x.font = '14px Px'; x.textBaseline = 'middle';
-  x.font = '12px Px'; x.fillText('ΦΤΟΥ', 0, -14); x.fillText('ΦΤΟΥ', 0, 2); x.fillText('ΦΤΟΥ', 0, 18);
+  x.font = '12px Px'; { const w = L ? 'FTOU' : 'ΦΤΟΥ'; x.fillText(w, 0, -14); x.fillText(w, 0, 2); x.fillText(w, 0, 18); }
   x.restore();
 
   return c.toDataURL('image/png');

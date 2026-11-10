@@ -160,26 +160,68 @@ export function setMood({ cast = 0, shield = 0, moutza = 0, mirror = 0, dead = f
 
 // ---------- one-shots ----------
 export function ftou(times = 3) {
+  // Cartoon spitting: "ptoo! ptoo! PTOOEY!" — each spit higher and wetter, then a slide whistle and a boing.
   if (!ctx) return;
   const t0 = now() + 0.02;
+  const base = 0.92 + Math.random() * 0.22; // never quite the same twice
   for (let i = 0; i < times; i++) {
-    const t = t0 + i * 0.3;
-    // "f" — air through teeth
-    const n1 = noiseSrc(); const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 4200; bp.Q.value = 0.9;
-    const g1 = ctx.createGain(); n1.connect(bp); bp.connect(g1); out(g1, 0.2);
-    env(g1, t, 0.025, 0.32, 0.06, 0.05); n1.start(t); n1.stop(t + 0.2);
-    // "t" — the tongue click
-    const n2 = noiseSrc(); const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500;
-    const g2 = ctx.createGain(); n2.connect(hp); hp.connect(g2); out(g2, 0.2);
-    env(g2, t + 0.12, 0.003, 0.4, 0.005, 0.03); n2.start(t + 0.12); n2.stop(t + 0.2);
-    // "ou" — a tiny voiced vowel
+    const t = t0 + i * 0.24;
+    const last = i === times - 1;
+    // "p" — lips popping
+    const n1 = noiseSrc(); const lp = ctx.createBiquadFilter(); lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(2200, t); lp.frequency.exponentialRampToValueAtTime(300, t + 0.04);
+    const g1 = ctx.createGain(); n1.connect(lp); lp.connect(g1); out(g1, 0.1);
+    env(g1, t, 0.002, 0.7, 0.008, 0.035); n1.start(t); n1.stop(t + 0.08);
+    // "t" — a sharp tongue click
+    const n2 = noiseSrc(); const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3200;
+    const g2 = ctx.createGain(); n2.connect(hp); hp.connect(g2); out(g2, 0.1);
+    env(g2, t + 0.035, 0.002, 0.35, 0.004, 0.02); n2.start(t + 0.035); n2.stop(t + 0.08);
+    // "oo(ey)" — a squeaky voiced vowel that slides up like a cartoon
+    const tv = t + 0.045, len = last ? 0.32 : 0.15;
+    const f0 = (250 + i * 80) * base;
     const o = ctx.createOscillator(); o.type = 'sawtooth';
-    o.frequency.setValueAtTime(210, t + 0.14); o.frequency.exponentialRampToValueAtTime(160, t + 0.3);
-    const v1 = ctx.createBiquadFilter(); v1.type = 'bandpass'; v1.frequency.value = 330; v1.Q.value = 4;
-    const v2 = ctx.createBiquadFilter(); v2.type = 'bandpass'; v2.frequency.value = 780; v2.Q.value = 6;
-    const g3 = ctx.createGain(); o.connect(v1); o.connect(v2); v1.connect(g3); v2.connect(g3); out(g3, 0.25);
-    env(g3, t + 0.14, 0.02, 0.3, 0.04, 0.1); o.start(t + 0.14); o.stop(t + 0.36);
+    o.frequency.setValueAtTime(f0, tv);
+    o.frequency.exponentialRampToValueAtTime(f0 * (last ? 1.9 : 1.45), tv + len);
+    const vib = ctx.createOscillator(); vib.frequency.value = 9; const vg = ctx.createGain(); vg.gain.value = last ? 18 : 6;
+    vib.connect(vg); vg.connect(o.frequency); vib.start(tv); vib.stop(tv + len + 0.05);
+    const v1 = ctx.createBiquadFilter(); v1.type = 'bandpass'; v1.Q.value = 5;
+    const v2 = ctx.createBiquadFilter(); v2.type = 'bandpass'; v2.Q.value = 7;
+    v1.frequency.setValueAtTime(330, tv); v1.frequency.linearRampToValueAtTime(last ? 520 : 380, tv + len);   // oo -> ey
+    v2.frequency.setValueAtTime(800, tv); v2.frequency.linearRampToValueAtTime(last ? 1900 : 1000, tv + len);
+    const g3 = ctx.createGain(); o.connect(v1); o.connect(v2); v1.connect(g3); v2.connect(g3); out(g3, 0.2);
+    env(g3, tv, 0.012, last ? 0.5 : 0.38, len * 0.55, len * 0.45); o.start(tv); o.stop(tv + len + 0.05);
+    // the splat, and a few droplets
+    const ts = tv + len * 0.8;
+    const n3 = noiseSrc(); const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1300; bp.Q.value = 1.4;
+    const g4 = ctx.createGain(); n3.connect(bp); bp.connect(g4); out(g4, 0.25);
+    env(g4, ts, 0.003, last ? 0.4 : 0.22, 0.01, 0.07); n3.start(ts); n3.stop(ts + 0.12);
+    for (let k = 0; k < (last ? 4 : 2); k++) {
+      const td = ts + 0.03 + Math.random() * 0.12;
+      const d = ctx.createOscillator(); d.type = 'sine';
+      const fd = 1600 + Math.random() * 1800;
+      d.frequency.setValueAtTime(fd, td); d.frequency.exponentialRampToValueAtTime(fd * 0.45, td + 0.05);
+      const gd = ctx.createGain(); d.connect(gd); out(gd, 0.4);
+      env(gd, td, 0.002, 0.12, 0, 0.05); d.start(td); d.stop(td + 0.08);
+    }
   }
+  // finale: a slide whistle up and down, then a springy boing
+  const tw = t0 + times * 0.24 + 0.22;
+  const w = ctx.createOscillator(); w.type = 'sine';
+  w.frequency.setValueAtTime(700 * base, tw);
+  w.frequency.exponentialRampToValueAtTime(2300 * base, tw + 0.22);
+  w.frequency.exponentialRampToValueAtTime(420 * base, tw + 0.5);
+  const wv = ctx.createOscillator(); wv.frequency.value = 6.5; const wvg = ctx.createGain(); wvg.gain.value = 25;
+  wv.connect(wvg); wvg.connect(w.frequency); wv.start(tw); wv.stop(tw + 0.55);
+  const gw = ctx.createGain(); w.connect(gw); out(gw, 0.3);
+  env(gw, tw, 0.02, 0.1, 0.4, 0.08); w.start(tw); w.stop(tw + 0.56);
+  const tb = tw + 0.5;
+  const b = ctx.createOscillator(); b.type = 'triangle';
+  b.frequency.setValueAtTime(190 * base, tb); b.frequency.exponentialRampToValueAtTime(95 * base, tb + 0.55);
+  const bv = ctx.createOscillator(); bv.frequency.value = 14; const bvg = ctx.createGain();
+  bvg.gain.setValueAtTime(60, tb); bvg.gain.exponentialRampToValueAtTime(2, tb + 0.55);
+  bv.connect(bvg); bvg.connect(b.frequency); bv.start(tb); bv.stop(tb + 0.6);
+  const gb = ctx.createGain(); b.connect(gb); out(gb, 0.2);
+  env(gb, tb, 0.005, 0.32, 0.05, 0.5); b.start(tb); b.stop(tb + 0.6);
 }
 
 export function bell(strikes = 1, base = 196, gap = 1.5, level = 0.25) {

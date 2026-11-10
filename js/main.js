@@ -14,7 +14,7 @@ const SKIP = params.has('skip'); // jump straight into the ritual (for recording
 
 // All rates are per second, so the piece behaves the same at 30, 60 or 120 Hz.
 const CFG = {
-  decay: 1.2, heal: 16, cast: 24, shieldHeal: 4, mirrorHeal: 1,
+  decay: 1.2, heal: 16, cast: 9, shieldHeal: 4, mirrorHeal: 1,
   graceDrain: 11, graceRecharge: 9,
   threatGap: 5.5, warn: 3.4,
   session: KIOSK ? 100 : 110,
@@ -25,39 +25,59 @@ const CFG = {
 const ORDER = ['shield', 'mirror', 'moutza', 'cast'];
 const KEYS = { '1': 'shield', '2': 'mirror', '3': 'moutza', '4': 'cast' };
 
-// ---------- static text ----------
-const GREEK_ONLY = new Set(['title', 'meterLo', 'meterHi']);
-document.querySelectorAll('[data-t]').forEach((el) => {
-  const pair = UI[el.dataset.t]; if (!pair) return;
-  if (el.classList.contains('gr') || GREEK_ONLY.has(el.dataset.t)) el.textContent = pair[0];
-  else if (el.classList.contains('en')) el.textContent = pair[1];
-  else el.innerHTML = `${pair[0]}<span class="en">${pair[1]}</span>`;
-});
-const setBi = (el, pair) => { el.querySelector('.gr').textContent = pair[0]; el.querySelector('.en').textContent = pair[1]; };
-setBi($('#begin'), UI.gateNoCam);
-setBi($('#replay'), UI.replay);
-setBi($('#sound-chip'), UI.soundChip);
-$('.cam-note .best').innerHTML = KIOSK ? '' : `${UI.bestOn[0]}<br><i>${UI.bestOn[1]}</i>`;
-setBi($('#cert-download'), UI.download);
-setBi($('#again'), UI.again);
-setBi($('.tired'), UI.tired);
+// ---------- language: one at a time, Greek or English ----------
+const pickLang = () => {
+  const q = params.get('lang');
+  if (q === 'en' || q === 'el') return q === 'en' ? 1 : 0;
+  try { const v = localStorage.getItem('yiayia-lang'); if (v === '0' || v === '1') return +v; } catch (_) {}
+  return /^el\b/i.test(navigator.language || '') ? 0 : 1;
+};
+let L = pickLang();
+const tr = (pair) => (pair ? pair[L] : '');
+const setBi = (el, pair) => { el.querySelector('.gr').textContent = tr(pair); const e = el.querySelector('.en'); if (e) e.textContent = ''; };
+
 if (KIOSK) document.body.classList.add('kiosk');
 
 // grace (charm power) bar under the meter
 const graceBar = document.createElement('div');
 graceBar.id = 'grace';
-graceBar.innerHTML = '<div id="grace-fill"></div><span>ΧΑΡΗ · grace</span>';
+graceBar.innerHTML = '<div id="grace-fill"></div><span></span>';
 $('#meter').appendChild(graceBar);
 const style = document.createElement('style');
 style.textContent = `#grace{position:relative;height:6px;margin-top:22px;background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.4)}
 #grace-fill{height:100%;width:100%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
 #grace span{position:absolute;right:0;top:9px;font-size:7px;color:var(--gold);letter-spacing:1px;font-family:var(--px)}
-#grace.empty{border-color:var(--alert)} #grace.empty span{color:var(--alert)}`;
+#grace.empty{border-color:var(--alert)} #grace.empty span{color:var(--alert)}
+.g-row .sub{display:block;font-family:var(--serif);font-style:italic;font-size:11px;margin-top:3px;color:inherit;opacity:.8}`;
 document.head.appendChild(style);
 
-// gesture list
-$('#gesture-list').innerHTML = ORDER.map((k, i) => `
-  <div class="g-row" data-g="${k}">${icon(k)}<div><span class="gr">${GESTURES[k].gr}</span><span class="en">${GESTURES[k].hint[1]}</span></div><kbd>${i + 1}</kbd></div>`).join('');
+let manualReason = null;
+function applyLang() {
+  document.documentElement.lang = L ? 'en' : 'el';
+  document.querySelectorAll('[data-t]').forEach((el) => { const pair = UI[el.dataset.t]; if (pair) el.textContent = tr(pair); });
+  setBi($('#begin'), UI.gateNoCam);
+  setBi($('#replay'), UI.replay);
+  setBi($('#sound-chip'), UI.soundChip);
+  setBi($('#cert-download'), UI.download);
+  setBi($('#again'), UI.again);
+  setBi($('.tired'), UI.tired);
+  setBi($('#gate-tip'), UI.handTip);
+  $('#cert-download').setAttribute('download', tr(UI.fileName));
+  $('.cam-note .best').textContent = KIOSK ? '' : tr(UI.bestOn);
+  graceBar.querySelector('span').textContent = tr(UI.grace);
+  $('#gesture-list').innerHTML = ORDER.map((k, i) => `
+    <div class="g-row" data-g="${k}">${icon(k)}<div><span class="gr">${L ? GESTURES[k].en : GESTURES[k].gr}</span><span class="sub">${tr(GESTURES[k].hint)}</span></div><kbd>${i + 1}</kbd></div>`).join('');
+  bindRows();
+  if (manualReason) { $('#manual-note').textContent = tr(UI.nocam); setBi($('#gate-msg'), UI.noCamWhy[manualReason] || UI.noCamWhy['no-camera']); }
+  $('#lang').textContent = L ? 'ΕΛ' : 'EN';
+  document.querySelectorAll('#lang-title [data-l]').forEach((sp) => sp.classList.toggle('on', +sp.dataset.l === L));
+  lastGateState = '';
+}
+function toggleLang() {
+  L = 1 - L;
+  try { localStorage.setItem('yiayia-lang', String(L)); } catch (_) {}
+  applyLang();
+}
 
 // ---------- scene + state ----------
 const eye = createEye($('#stage'));
@@ -90,11 +110,11 @@ function say(key, { force = false, cd = 5 } = {}) {
   if (!force && (S.said[key] ?? -99) + cd > t) return;
   if (!force && t < S.bubbleUntil - 1.2) return;
   S.said[key] = t;
-  const [gr, en] = pick(YIAYIA[key]);
-  const b = $('#bubble'), g = b.querySelector('.b-gr'), e = b.querySelector('.b-en');
-  const spoke = audio.voice(key);
+  const gr = tr(pick(YIAYIA[key]));
+  const b = $('#bubble'), g = b.querySelector('.b-gr');
+  const spoke = L === 0 && audio.voice(key); // recorded voice is Greek
   clearInterval(typeTimer);
-  g.textContent = ''; e.textContent = en;
+  g.textContent = '';
   let i = 0;
   typeTimer = setInterval(() => {
     i += 1; g.textContent = gr.slice(0, i);
@@ -116,7 +136,7 @@ function react(cls, ms = 900) {
 function log(pair, type = '') {
   const c = $('#log'); const d = document.createElement('div');
   d.className = 'log-entry' + (type ? ' log-' + type : '');
-  d.innerHTML = `&gt; ${pair[0]}<span class="en">${pair[1]}</span>`;
+  d.textContent = `> ${tr(pair)}`;
   c.prepend(d);
   while (c.children.length > 6) c.removeChild(c.lastChild);
 }
@@ -129,7 +149,8 @@ track.onUpdate((ev) => { S.present = ev.present; S.gesture = ev.gesture; S.point
 function enterManual(reason) {
   track.enableManual();
   document.body.classList.add('manual');
-  $('#manual-note').innerHTML = `${UI.nocam[0]}<br><i>${UI.nocam[1]}</i>`;
+  manualReason = reason;
+  $('#manual-note').textContent = tr(UI.nocam);
   // Without a camera the piece can't be played by hand, so (only then) offer buttons.
   $('#gate').dataset.state = 'manual';
   setBi($('#gate-msg'), UI.noCamWhy[reason] || UI.noCamWhy['no-camera']);
@@ -140,20 +161,24 @@ function enterManual(reason) {
 }
 
 // hold-to-gesture buttons and keys (always on — useful for demos and recording too)
-document.querySelectorAll('.g-row').forEach((row) => {
-  const g = row.dataset.g;
-  const on = (e) => { if (track.mode !== 'manual') return; e.preventDefault(); track.setManualGesture(g); };
-  const off = () => track.setManualGesture(null);
-  row.addEventListener('pointerdown', on);
-  row.addEventListener('pointerup', off); row.addEventListener('pointercancel', off); row.addEventListener('pointerleave', off);
-});
+function bindRows() {
+  document.querySelectorAll('.g-row').forEach((row) => {
+    const g = row.dataset.g;
+    const on = (e) => { if (track.mode !== 'manual') return; e.preventDefault(); track.setManualGesture(g); };
+    const off = () => track.setManualGesture(null);
+    row.addEventListener('pointerdown', on);
+    row.addEventListener('pointerup', off); row.addEventListener('pointercancel', off); row.addEventListener('pointerleave', off);
+  });
+}
 let heldKey = null;
 addEventListener('keydown', (e) => {
   if (e.repeat) return;
   if (KEYS[e.key] && !e.ctrlKey && !e.metaKey) { heldKey = e.key; track.setManualGesture(KEYS[e.key]); }
   const dbgCombo = KIOSK ? (e.key.toLowerCase() === 'h' && e.ctrlKey && e.shiftKey) : (e.key.toLowerCase() === 'h' && !e.ctrlKey);
   if (dbgCombo) $('#debug').hidden = !$('#debug').hidden;
-  if ((e.key === ' ' || e.key === 'Enter') && S.scene === 'title-screen' && track.mode === 'manual') begin();
+  if (e.key.toLowerCase() === 'l' && !e.ctrlKey && !e.metaKey) toggleLang();
+  // hidden backup for the artist: Enter or Space always starts (not shown on screen)
+  if ((e.key === ' ' || e.key === 'Enter') && S.scene === 'title-screen') begin();
 });
 addEventListener('keyup', (e) => { if (e.key === heldKey) { heldKey = null; track.setManualGesture(null); } });
 
@@ -161,17 +186,17 @@ addEventListener('keyup', (e) => { if (e.key === heldKey) { heldKey = null; trac
 function spawnThreat() {
   let i; do { i = Math.floor(Math.random() * THREATS.length); } while (S.recent.includes(i));
   S.recent.push(i); if (S.recent.length > 8) S.recent.shift();
-  const [gr, en] = THREATS[i];
-  const sender = pick(SENDERS);
+  const textPair = THREATS[i];
+  const senderPair = pick(SENDERS);
   const id = ++S.threatId;
   const el = document.createElement('div');
   el.className = 'notif';
-  el.innerHTML = `<div class="ev"></div><div class="from"><span>${UI.incoming[0]} · ${sender}</span></div>
-    <div class="txt">${gr}</div><div class="txt-en">${en}</div><div class="timer"></div><div class="stamp"></div>`;
+  el.innerHTML = `<div class="ev"></div><div class="from"><span>${tr(UI.incoming)} · ${tr(senderPair)}</span></div>
+    <div class="txt">${tr(textPair)}</div><div class="timer"></div><div class="stamp"></div>`;
   $('#notifications').appendChild(el);
   eye.spawnThreat(id, CFG.warn);
   audio.notify();
-  S.threats.push({ id, el, t: 0, done: false, sender });
+  S.threats.push({ id, el, t: 0, done: false, senderPair, textPair });
 }
 
 function resolveThreat(th, outcome) {
@@ -180,17 +205,17 @@ function resolveThreat(th, outcome) {
   th.el.classList.add(outcome);
   const stamp = th.el.querySelector('.stamp');
   if (outcome === 'blocked') {
-    S.stats.blocked++; audio.blocked(); S.meter += 3; stamp.textContent = UI.blocked[0];
+    S.stats.blocked++; audio.blocked(); S.meter += 3; stamp.textContent = tr(UI.blocked);
     log(UI.blocked, 'sys'); say('blocked', { cd: 10 });
   } else if (outcome === 'returned') {
-    S.stats.returned++; audio.reflect(); S.meter += 8; stamp.textContent = UI.returned[0];
-    log([`${UI.returned[0]}: ${th.sender}`, UI.returned[1]], 'good'); say('mirror', { cd: 6 });
+    S.stats.returned++; audio.reflect(); S.meter += 8; stamp.textContent = tr(UI.returned);
+    log([`${UI.returned[0]}: ${th.senderPair[0]}`, `${UI.returned[1]}: ${th.senderPair[1]}`], 'good'); say('mirror', { cd: 6 });
   } else {
     const dmg = 12 + S.meter * 0.1;
     S.meter -= dmg; S.curseLoad += dmg; S.stats.hits++;
     eye.shock(); audio.hit(); S.hitFlash = 0.55; react('react-hit', 500);
-    stamp.textContent = UI.landed[0];
-    log([th.el.querySelector('.txt').textContent, th.el.querySelector('.txt-en').textContent], 'curse');
+    stamp.textContent = tr(UI.landed);
+    log(th.textPair, 'curse');
     say('hit', { cd: 4 });
   }
   setTimeout(() => th.el.classList.add('leaving'), 1300);
@@ -338,10 +363,10 @@ function frame(n) {
   graceBar.classList.toggle('empty', S.grace <= 0);
   $('#session-fill').style.width = Math.min(100, S.sessionT / CFG.session * 100) + '%';
   const stKey = S.dead ? null : (track.mode === 'camera' && !S.present) ? 'nohand' : (S.gesture === 'none' ? 'idle' : S.gesture);
-  if (stKey) { $('#status-gr').textContent = UI.status[stKey][0]; $('#status-en').textContent = UI.status[stKey][1]; }
+  if (stKey) $('#status-gr').textContent = tr(UI.status[stKey]);
   $('#hand-hint').classList.toggle('show', S.playing && !S.dead && track.mode === 'camera' && S.noHandT > 1.5);
   const tip = $('#hand-hint .tip'), wantTip = S.noHandT > 8;
-  if (wantTip !== !!tip.textContent) tip.innerHTML = wantTip ? `${UI.handTip[0]}<br><i>${UI.handTip[1]}</i>` : '';
+  if (wantTip !== !!tip.textContent) tip.textContent = wantTip ? tr(UI.handTip) : '';
   if (S.time > S.bubbleUntil) $('#bubble').classList.remove('show');
 
   // light
@@ -368,7 +393,7 @@ requestAnimationFrame(frame);
 
 // ---------- hands-only gate ----------
 const HOLD_TO_BEGIN = 0.8;
-let lastGateState = '';
+var lastGateState = '';
 function updateGate(dt) {
   const gate = $('#gate');
   if (track.mode === 'manual') return; // enterManual() set it up
@@ -389,7 +414,6 @@ function updateGate(dt) {
   const key = state + msg[0];
   if (key !== lastGateState) { lastGateState = key; gate.dataset.state = state; setBi($('#gate-msg'), msg); }
 }
-setBi($('#gate-tip'), UI.handTip);
 
 function updateReplay(dt) {
   S.endT += dt;
@@ -428,7 +452,8 @@ async function boot(token) {
   show('boot-screen');
   const pre = $('#boot-text'); pre.innerHTML = '';
   const fast = KIOSK ? 0.55 : 1;
-  for (const [gr] of BOOT_LINES) {
+  for (const pair of BOOT_LINES) {
+    const gr = tr(pair);
     const line = document.createElement('div'); pre.appendChild(line);
     const okAt = gr.lastIndexOf(' OK');
     for (let i = 1; i <= gr.length; i += 2) {
@@ -471,8 +496,8 @@ async function tutorial(token) {
   show('tutorial-screen');
   const wrap = $('#tut-cards');
   wrap.innerHTML = ORDER.map(k => `<div class="tut-card" data-g="${k}">${icon(k)}
-    <div class="gr">${GESTURES[k].gr}</div><div class="en">${GESTURES[k].en}</div>
-    <div class="hint">${GESTURES[k].hint[0]} · <i>${GESTURES[k].hint[1]}</i></div></div>`).join('');
+    <div class="gr">${L ? GESTURES[k].en : GESTURES[k].gr}</div>
+    <div class="hint">${tr(GESTURES[k].hint)}</div></div>`).join('');
   say('teach', { force: true });
   if (!(await wait(1500, token))) return;
   for (const k of ORDER) {
@@ -511,7 +536,7 @@ async function endSession() {
   audio.bell(2, 196, 1.4, 0.22);
   say('goodbye', { force: true });
   if (!(await wait(2600, token))) return;
-  const url = await renderCertificate(S.stats, eye.canvas);
+  const url = await renderCertificate(S.stats, eye.canvas, L);
   if (token !== run) return;
   $('#cert-img').src = url;
   $('#cert-download').href = url;
@@ -538,6 +563,9 @@ function goTitle() {
 }
 
 $('#begin').addEventListener('click', begin);
+$('#lang').addEventListener('click', toggleLang);
+$('#lang-title').addEventListener('click', toggleLang);
+applyLang();
 $('#again').addEventListener('click', () => { ++run; startPlay(); });
 $('#mute').addEventListener('click', () => {
   audio.setMuted(!audio.isMuted());

@@ -46,7 +46,7 @@
     </div>
 
     <section id="status" class="panel">
-      <div class="panel-head">ΓΙΑΓΙΑ_OS v8.0 <button id="mute" class="icon-btn" aria-label="Sound on/off">♪</button></div>
+      <div class="panel-head"><span data-t="panelHead"></span><span class="head-btns"><button id="lang" class="icon-btn" aria-label="Language / Γλώσσα">EN</button><button id="mute" class="icon-btn" aria-label="Sound on/off">♪</button></span></div>
       <div id="status-gr" class="status-gr"></div>
       <div id="status-en" class="status-en"></div>
       <div id="session-bar"><div id="session-fill"></div></div>
@@ -57,7 +57,7 @@
       <div class="portrait">
         <video id="yiayia-video" src="assets/yiayia.mp4" autoplay loop muted playsinline></video>
       </div>
-      <div class="live"><span class="rec"></span> ΖΩΝΤΑΝΑ · ΓΙΑΓΙΑ</div>
+      <div class="live"><span class="rec"></span> <span data-t="live"></span></div>
       <div id="bubble" aria-live="polite"><div class="b-gr"></div><div class="b-en"></div></div>
     </section>
 
@@ -71,18 +71,18 @@
       <div id="manual-note"></div>
     </section>
 
-    <div id="hand-hint"><div class="gr">ΔΕΙΞΕ ΤΟ ΧΕΡΙ ΣΟΥ</div><div class="en">SHOW YOUR HAND</div><div class="tip"></div></div>
+    <div id="hand-hint"><div class="gr" data-t="handHint"></div><div class="tip"></div></div>
   </main>
 
   <!-- ===== SCREENS ===== -->
   <section id="title-screen" class="screen">
+    <button id="lang-title" class="lang-pill" aria-label="Language / Γλώσσα"><span data-l="0">ΕΛ</span> · <span data-l="1">EN</span></button>
     <img src="assets/mati.svg" class="title-mati" alt="">
     <h1 class="title-gr" data-t="title"></h1>
     <div class="title-sub"><span data-t="subtitle"></span></div>
     <div id="gate" data-state="idle">
       <div class="gate-frame">
         <canvas id="title-preview" width="320" height="240" aria-hidden="true"></canvas>
-        <img src="assets/moutza.webp" class="gate-palm" alt="">
         <div class="gate-bar"><div id="gate-fill"></div></div>
       </div>
       <div id="gate-msg" aria-live="polite"><div class="gr"></div><div class="en"></div></div>
@@ -90,26 +90,26 @@
       <button id="begin" class="big-btn" hidden><span class="gr"></span><span class="en"></span></button>
     </div>
     <p class="cam-note"><span data-t="camNote"></span><span class="best"></span></p>
-    <p class="credits">Αλέξανδρος Τουραμάνης · Alexandros Touramanis</p>
+    <p class="credits">Alexandros Touramanis</p>
   </section>
 
   <section id="boot-screen" class="screen"><pre id="boot-text"></pre></section>
 
   <section id="oil-screen" class="screen">
-    <div class="oil-head"><div class="gr" data-t="diagnosis"></div><div class="en" data-t="oilTest"></div></div>
+    <div class="oil-head"><div class="gr" data-t="diagnosis"></div><div class="sub" data-t="oilTest"></div></div>
     <canvas id="oil-canvas"></canvas>
     <div id="oil-verdict"><div class="gr"></div><div class="en"></div></div>
   </section>
 
   <section id="tutorial-screen" class="screen">
-    <div class="tut-head"><div class="gr">ΤΑ ΞΟΡΚΙΑ ΤΗΣ ΓΙΑΓΙΑΣ</div><div class="en">YIAYIA'S SPELLS</div></div>
+    <div class="tut-head"><div class="gr" data-t="tutHead"></div></div>
     <div id="tut-cards"></div>
-    <div class="tut-foot"><span class="gr">Δοκίμασε το καθένα</span> · <span class="en">Try each one</span></div>
+    <div class="tut-foot"><span class="gr" data-t="tutFoot"></span></div>
   </section>
 
   <section id="crash-screen" class="screen">
     <h1 class="blink"><span data-t="crash1"></span></h1>
-    <p class="crash-en" data-t="crash2"></p>
+    <p class="crash-sub" data-t="crash2"></p>
     <div class="reboot-wrap">
       <svg viewBox="0 0 120 120" class="reboot-ring"><circle cx="60" cy="60" r="54" class="ring-bg"/><circle id="reboot-progress" cx="60" cy="60" r="54" class="ring-fg"/></svg>
       <img src="assets/moutza.webp" id="reboot-hand" alt="Μούντζα">
@@ -127,7 +127,7 @@
     <div id="replay"><div class="replay-bar"><div id="replay-fill"></div></div><div class="gr"></div><div class="en"></div></div>
   </section>
 
-  <div id="sound-chip" hidden><span aria-hidden="true">♪</span> <span class="gr"></span> · <span class="en"></span></div>
+  <div id="sound-chip" hidden><span aria-hidden="true">♪</span> <span class="gr"></span><span class="en"></span></div>
 
   <div id="debug" hidden>
     <h2>ΓΙΑΓΙΑ CONFIG</h2>

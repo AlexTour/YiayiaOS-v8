@@ -37,8 +37,8 @@ export function classify(lm) {
   // Mirror: index and middle up and pressed together, ring and pinky down.
   if (idx && mid && !rng && !pnk && d(lm[8], lm[12]) / palm < 0.4) return 'mirror';
 
-  // Moutza: all five spread wide.
-  if (idx && mid && rng && pnk && thumbOut && d(lm[8], lm[20]) / palm > 0.75) return 'moutza';
+  // Moutza: an open hand. Four fingers up is enough; real hands rarely spread perfectly.
+  if (idx && mid && rng && pnk && d(lm[8], lm[20]) / palm > 0.5) return 'moutza';
 
   return 'none';
 }

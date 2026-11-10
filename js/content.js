@@ -34,8 +34,9 @@ export const THREATS = [
 ];
 
 export const SENDERS = [
-  'ΘΕΙΑ ΦΩΦΩ', 'Η ΓΕΙΤΟΝΙΣΣΑ', 'ΚΥΡΑ-ΛΕΝΩ', 'ΑΛΓΟΡΙΘΜΟΣ', 'ΑΓΝΩΣΤΟΣ ΑΡΙΘΜΟΣ',
-  'Η ΚΟΥΜΠΑΡΑ', 'CLOUD', 'ΤΟ ΚΑΦΕΝΕΙΟ', 'ΕΝΑ BOT', 'Η ΠΕΘΕΡΑ',
+  ['ΘΕΙΑ ΦΩΦΩ', 'AUNTIE FOFO'], ['Η ΓΕΙΤΟΝΙΣΣΑ', 'THE NEIGHBOUR'], ['ΚΥΡΑ-ΛΕΝΩ', 'KYRA LENO'], ['ΑΛΓΟΡΙΘΜΟΣ', 'THE ALGORITHM'],
+  ['ΑΓΝΩΣΤΟΣ ΑΡΙΘΜΟΣ', 'UNKNOWN NUMBER'], ['Η ΚΟΥΜΠΑΡΑ', 'THE KOUMBARA'], ['CLOUD', 'THE CLOUD'], ['ΤΟ ΚΑΦΕΝΕΙΟ', 'THE KAFENEIO'],
+  ['ΕΝΑ BOT', 'A BOT'], ['Η ΠΕΘΕΡΑ', 'MOTHER-IN-LAW'],
 ];
 
 // What Yiayia says. Arrays = random pick.
@@ -75,12 +76,12 @@ export const YIAYIA = {
 };
 
 export const BOOT_LINES = [
-  ['ΓΙΑΓΙΑ BIOS v8.0  (c) 1952 Κυρά-Ρήνη Systems', 'YIAYIA BIOS v8.0'],
-  ['Έλεγχος μνήμης: 3 γενιές .......... OK', 'Memory check: 3 generations OK'],
-  ['Φόρτωση προσευχών ................. OK', 'Loading prayers OK'],
-  ['Έλεγχος λαδιού (παρθένο) .......... OK', 'Checking oil (extra virgin) OK'],
-  ['Σύνδεση με Παναγία ................ OK', 'Connecting to Panagia OK'],
-  ['Φυλαχτά σε επάρκεια: 14 ........... OK', 'Charms in stock: 14 OK'],
+  ['ΓΙΑΓΙΑ BIOS v8.0  (c) 1952 Κυρά-Ρήνη Systems', 'YIAYIA BIOS v8.0  (c) 1952 Kyra-Rini Systems'],
+  ['Έλεγχος μνήμης: 3 γενιές .......... OK', 'Memory check: 3 generations ....... OK'],
+  ['Φόρτωση προσευχών ................. OK', 'Loading prayers ................... OK'],
+  ['Έλεγχος λαδιού (παρθένο) .......... OK', 'Checking oil (extra virgin) ....... OK'],
+  ['Σύνδεση με Παναγία ................ OK', 'Connecting to Panagia ............. OK'],
+  ['Φυλαχτά σε επάρκεια: 14 ........... OK', 'Charms in stock: 14 ............... OK'],
   ['Εκκίνηση ΜΑΤΙ.ΕΧΕ ...', 'Starting MATI.EXE ...'],
 ];
 
@@ -122,6 +123,7 @@ export const UI = {
     moutzes:  ['Μούντζες', 'Moutzes given'],
   },
   certSign:   ['Η γιαγιά', 'Yiayia'],
+  fileName:   ['yiayia-os-pistopoiitiko.png', 'yiayia-os-certificate.png'],
   download:   ['ΚΑΤΕΒΑΣΕ ΤΟ', 'DOWNLOAD'],
   again:      ['ΞΑΝΑ', 'AGAIN'],
   tired:      ['Η ΓΙΑΓΙΑ ΚΟΥΡΑΣΤΗΚΕ', 'YIAYIA IS TIRED'],
@@ -142,6 +144,12 @@ export const UI = {
   handTip:    ['Πλησίασε την κάμερα, με το φως μπροστά σου, και άνοιξε την παλάμη.', 'Move closer to the camera, light in front of you, and open your palm.'],
   replay:     ['ΔΕΙΞΕ ΠΑΛΑΜΗ ΓΙΑ ΝΑ ΞΑΝΑΠΑΙΞΕΙΣ', 'SHOW YOUR PALM TO PLAY AGAIN'],
   soundChip:  ['Άγγιξε οπουδήποτε για ήχο', 'Tap anywhere for sound'],
+  panelHead:  ['ΓΙΑΓΙΑ_OS v8.0', 'YIAYIA_OS v8.0'],
+  live:       ['ΖΩΝΤΑΝΑ · ΓΙΑΓΙΑ', 'LIVE · YIAYIA'],
+  handHint:   ['ΔΕΙΞΕ ΤΟ ΧΕΡΙ ΣΟΥ', 'SHOW YOUR HAND'],
+  tutHead:    ['ΤΑ ΞΟΡΚΙΑ ΤΗΣ ΓΙΑΓΙΑΣ', "YIAYIA'S SPELLS"],
+  tutFoot:    ['Δοκίμασε το καθένα', 'Try each one'],
+  grace:      ['ΧΑΡΗ', 'GRACE'],
   bestOn:     ['Καλύτερα σε υπολογιστή με κάμερα, με ήχο.', 'Best on a computer with a webcam, sound on.'],
 };
 
